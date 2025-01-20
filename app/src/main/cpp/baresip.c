@@ -529,6 +529,7 @@ JNIEXPORT void JNICALL Java_com_tutpro_baresip_plus_BaresipService_baresipStart(
     conf_path_set(path);
 
     log_level_set((enum log_level)jLogLevel);
+    log_enable_debug(true);
 
     err = conf_configure();
     if (err) {
