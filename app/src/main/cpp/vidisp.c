@@ -264,6 +264,10 @@ static void setup_vertices(struct vidisp_st *st)
     st->vertices[i] = 0;
 }
 
+/**
+ * vp viewpoint
+ * ortho
+ */
 static void setup_layout(struct vidrect *ortho, struct vidrect *vp)
 {
     int x, y;
@@ -400,7 +404,6 @@ int opengles_display(
             LOGW("opengles_display: frame width must be multiple of 4\n");
             return EINVAL;
         }
-
         err = vidframe_alloc(&st->vf, VID_FMT_RGB565, &frame->size);
         if (err) {
             LOGW("opengles_display: vidframe_alloc failed: %d\n", err);

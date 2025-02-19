@@ -236,6 +236,10 @@ object Config {
             BaresipService.toneCountry = toneCountry
         config = "${config}tone_country ${BaresipService.toneCountry}\n"
 
+        //log config
+        for (line in config.split("\n"))
+            Log.d("Config", line)
+
         save()
         BaresipService.isConfigInitialized = true
 

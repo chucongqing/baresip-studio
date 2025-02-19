@@ -97,10 +97,11 @@
                             android:layout_width="fill_parent"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:inputType="textEmailAddress"
-                            android:textSize="20sp"
                             android:hint="@string/callee"
-                            android:textColorHint="@color/colorSecondaryDark" >
+                            android:inputType="textEmailAddress"
+                            android:textColorHint="@color/colorSecondaryDark"
+                            android:textSize="20sp"
+                            tools:text="3000">
                             <!-- <requestFocus /> -->
                         </AutoCompleteTextView>
 

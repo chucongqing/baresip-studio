@@ -1,30 +1,62 @@
 package com.tutpro.baresip.plus
 
-import android.Manifest.permission.*
+import android.Manifest.permission.BLUETOOTH_CONNECT
+import android.Manifest.permission.CAMERA
+import android.Manifest.permission.POST_NOTIFICATIONS
+import android.Manifest.permission.READ_EXTERNAL_STORAGE
+import android.Manifest.permission.RECORD_AUDIO
+import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
 import android.app.KeyguardManager
 import android.app.NotificationManager
-import android.content.*
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.DialogInterface
+import android.content.Intent
 import android.content.Intent.ACTION_CALL
 import android.content.Intent.ACTION_DIAL
 import android.content.Intent.ACTION_VIEW
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import android.media.AudioManager
 import android.media.MediaActionSound
 import android.net.Uri
-import android.os.*
+import android.os.Build
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.os.Process
+import android.os.SystemClock
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.text.InputType
 import android.text.TextWatcher
 import android.util.TypedValue
-import android.view.*
+import android.view.KeyEvent
+import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuItem
+import android.view.MotionEvent
+import android.view.View
+import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
-import android.widget.*
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
+import android.widget.CheckBox
+import android.widget.Chronometer
+import android.widget.EditText
+import android.widget.ImageButton
+import android.widget.LinearLayout
+import android.widget.RelativeLayout
+import android.widget.Space
+import android.widget.Spinner
+import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
@@ -46,8 +78,10 @@ import com.tutpro.baresip.plus.Utils.showSnackBar
 import com.tutpro.baresip.plus.databinding.ActivityMainBinding
 import java.io.File
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 import kotlin.system.exitProcess
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -314,6 +348,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+
+
         aorSpinner.setOnLongClickListener {
             if (aorSpinner.selectedItemPosition != -1) {
                 val ua = UserAgent.ofAor(aorSpinner.tag.toString())
@@ -345,6 +381,7 @@ class MainActivity : AppCompatActivity() {
             imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT)
         }
 
+        callUri.setText("3000")
         securityButton.setOnClickListener {
             when (securityButton.tag) {
                 R.drawable.unlocked -> {
@@ -2436,6 +2473,7 @@ class MainActivity : AppCompatActivity() {
             else
                 callUri.text.clear()
             callUri.hint = getString(R.string.callee)
+            callUri.setText("3000");
             callUri.isFocusable = true
             callUri.isFocusableInTouchMode = true
             imm.hideSoftInputFromWindow(callUri.windowToken, 0)
@@ -2461,7 +2499,7 @@ class MainActivity : AppCompatActivity() {
             onHoldNotice.visibility = View.GONE
         } else {
             swipeRefresh.isEnabled = false
-            callUri.isFocusable = false
+            callUri.isFocusable = false;
             when (call.status) {
                 "outgoing", "transferring", "answered" -> {
                     callTitle.text = if (call.status == "answered")

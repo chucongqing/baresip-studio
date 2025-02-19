@@ -8,8 +8,82 @@
 #include <android/native_window.h>
 #include <android/native_window_jni.h>
 #include <libavcodec/jni.h>
+#include <re_dbg.h>
 #include "logger.h"
 #include "vidisp.h"
+#include <unwind.h>
+#include <dlfcn.h>
+
+
+// 捕获调用栈的代码（与之前相同）
+typedef struct {
+    void** current;
+    void** end;
+} BacktraceState;
+
+static _Unwind_Reason_Code unwindCallback(struct _Unwind_Context* context, void* arg) {
+    BacktraceState* state = (BacktraceState*)arg;
+    uintptr_t pc = _Unwind_GetIP(context);
+    if (pc) {
+        if (state->current == state->end) {
+            return _URC_END_OF_STACK;
+        } else {
+            *(state->current++) = (void*)pc;
+        }
+    }
+    return _URC_NO_REASON;
+}
+
+size_t captureBacktrace(void** buffer, size_t max) {
+    BacktraceState state = {buffer, buffer + max};
+    _Unwind_Backtrace(unwindCallback, &state);
+    return state.current - buffer;
+}
+
+// 自定义的 dumpBacktrace 版本（输出到缓冲区）
+static void dumpBacktrace(char* buf, size_t buf_size, void** buffer, size_t count) {
+    size_t offset = 0;
+
+    for (size_t idx = 0; idx < count; ++idx) {
+        const void* addr = buffer[idx];
+        const char* symbol = "";
+
+        Dl_info info;
+        if (dladdr(addr, &info) && info.dli_sname) {
+            symbol = info.dli_sname;
+        }
+
+        // 安全写入缓冲区
+        int written = snprintf(buf + offset, buf_size - offset,
+                "  #%2zu: %p  %s\n", idx, addr, symbol);
+        if (written <= 0 || (size_t)written >= (buf_size - offset)) {
+            break; // 缓冲区已满
+        }
+        offset += written;
+    }
+
+    // 确保字符串终止
+    if (offset < buf_size) {
+        buf[offset] = '\0';
+    } else {
+        buf[buf_size - 1] = '\0';
+    }
+}
+
+// 主功能函数
+void backtraceToLogcat() {
+    const size_t max = 30;
+    void* buffer[max];
+    char log_buffer[4096]; // 足够大的缓冲区
+
+    size_t count = captureBacktrace(buffer, max);
+    dumpBacktrace(log_buffer, sizeof(log_buffer), buffer, count);
+
+    __android_log_print(ANDROID_LOG_INFO, "MyApp", "\nBacktrace:\n%s", log_buffer);
+}
+
+
+
 
 enum
 {
@@ -441,14 +515,30 @@ static void *loggingFunction(void *arg)
 {
     (void)arg;
     ssize_t readSize;
+    ssize_t cacheSize = 0;
     char buf[128];
+    char cache[256];
 
     while ((readSize = read(pfd[0], buf, sizeof buf - 1)) > 0) {
+        bool ok = false;
         if (buf[readSize - 1] == '\n') {
-            --readSize;
+            ok = true;
+            strncpy(cache + cacheSize, buf, readSize);
+            cacheSize += readSize;
+            cache[cacheSize - 1] = '\0';
+        } else {
+            strncpy(cache + cacheSize, buf, readSize);
+            cacheSize += readSize;
+            if (cacheSize >= 128) {
+                ok = true;
+                cache[cacheSize] = '\0';
+            }
         }
-        buf[readSize] = 0;
-        LOGD("%s", buf);
+
+        if(ok) {
+            LOGD("%s", cache);
+            cacheSize = 0;
+        }
     }
 
     return 0;
@@ -530,6 +620,7 @@ JNIEXPORT void JNICALL Java_com_tutpro_baresip_plus_BaresipService_baresipStart(
 
     log_level_set((enum log_level)jLogLevel);
     log_enable_debug(true);
+    dbg_init(DBG_DEBUG,0);
 
     err = conf_configure();
     if (err) {

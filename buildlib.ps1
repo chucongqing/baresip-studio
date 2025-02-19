@@ -11,6 +11,7 @@ $linuxLibPath = "/home/ccq/dev/opensource/libbaresip-android"
 if (!$nobuild) {
 echo "wsl -e bash -c '$linuxLibPath/build.sh && $linuxLibPath/cp.sh'"
 ssh l82 "wsl -e bash -c `"$linuxLibPath/build.sh && $linuxLibPath/cp.sh`""
+scp l82:C:/tmp/gdist.zip $tmpPath
 }
 
 # 定义 ZIP 文件路径

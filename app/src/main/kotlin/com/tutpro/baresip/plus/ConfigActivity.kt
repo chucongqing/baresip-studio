@@ -708,7 +708,10 @@ class ConfigActivity : AppCompatActivity() {
 
     private fun done() {
 
-        if (save) Config.save()
+        if (save) {
+            Log.d("Config", "save config!");
+            Config.save()
+        }
         BaresipService.activities.remove("config")
         val intent = Intent(this, MainActivity::class.java)
         if (restart || audioRestart)

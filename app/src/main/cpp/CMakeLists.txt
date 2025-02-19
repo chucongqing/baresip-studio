@@ -166,4 +166,5 @@ target_link_libraries(baresip
         camera2ndk
         lib_cpu_features
         lib_ndk_compat
-        mediandk)
+        mediandk
+        )
